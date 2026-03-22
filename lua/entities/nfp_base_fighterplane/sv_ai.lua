@@ -97,6 +97,9 @@ function ENT:RunAI()
 						nfpCurTarget = self:AIGetTarget()
 					end
 
+					-- FIX 3: persist the resolved target for next tick
+					self._nfpLastCombatTarget = nfpCurTarget
+
 					if IsValid( nfpCurTarget ) then
 						if self:AITargetInFront( nfpCurTarget, 65 ) then
 							local nfpT = CurTime() + self:EntIndex() * 1337
@@ -111,7 +114,8 @@ function ENT:RunAI()
 								filter = nfpTraceFilter
 							} )
 
-							local nfpCanShoot = (IsValid( nfpHullTrace.Entity ) and nfpHullTrace.Entity.LVS and nfpHullTrace.Entity.GetAITEAM) and (nfpHullTrace.Entity:GetAITEAM() ~= self:GetAITEAM() or nfpHullTrace.Entity:GetAITEAM() == 0) or true
+							-- FIX 4: removed "or true" — friendly-fire check now actually works
+							local nfpCanShoot = (IsValid( nfpHullTrace.Entity ) and nfpHullTrace.Entity.LVS and nfpHullTrace.Entity.GetAITEAM) and (nfpHullTrace.Entity:GetAITEAM() ~= self:GetAITEAM() or nfpHullTrace.Entity:GetAITEAM() == 0)
 
 							if nfpCanShoot and self:AITargetInFront( nfpCurTarget, 22 ) then
 								local nfpCurHeat   = self:GetNWHeat()

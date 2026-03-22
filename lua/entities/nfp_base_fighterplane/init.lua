@@ -7,6 +7,11 @@ include( "sv_ai.lua" )
 function ENT:ApproachTargetAngle( nfpTargetAngle, nfpOverridePitch, nfpOverrideYaw, nfpOverrideRoll, nfpFreeMovement )
 	local nfpLocalAngles = self:WorldToLocalAngles( nfpTargetAngle )
 
+	-- FIX 1: tell LVS weapon systems where the AI is aiming
+	if self:GetAI() then
+		self:SetAIAimVector( nfpLocalAngles:Forward() )
+	end
+
 	local nfpLocalAngPitch = nfpLocalAngles.p
 	local nfpLocalAngYaw   = nfpLocalAngles.y
 	local nfpLocalAngRoll  = nfpLocalAngles.r
@@ -57,7 +62,7 @@ function ENT:CalcAero( phys, deltatime, EntTable )
 	local nfpWorldUp      = self:GetWorldUp()
 	local nfpSteer        = self:GetSteer()
 
-	local nfpStability, nfpInvStability = self:GetStability()
+	local nfpStability, nfpInvStability, nfpForwardVelocity = self:GetStability()
 
 	local nfpFwd  = self:GetForward()
 	local nfpLeft = -self:GetRight()
@@ -103,6 +108,10 @@ function ENT:CalcAero( phys, deltatime, EntTable )
 	local nfpPitch = math.Clamp( nfpSteer.y - nfpGravityPitch, -1, 1 ) * EntTable.TurnRatePitch * 3 * nfpStability - nfpStallPitch * nfpInvStability
 	local nfpYaw   = math.Clamp( nfpSteer.z * 4 + nfpGravityYaw, -1, 1 ) * EntTable.TurnRateYaw * nfpStability + nfpStallYaw * nfpInvStability
 	local nfpRoll  = math.Clamp( nfpSteer.x * 1.5, -1, 1 ) * EntTable.TurnRateRoll * 12 * nfpStability
+
+	-- FIX 2: landing gear lifecycle and ground wheel steering
+	self:HandleLandingGear( deltatime )
+	self:SetWheelSteer( nfpSteer.z * EntTable.WheelSteerAngle )
 
 	local nfpVelL = self:WorldToLocal( self:GetPos() + nfpVel )
 
